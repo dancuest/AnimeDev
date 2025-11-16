@@ -1,9 +1,11 @@
 package com.example.animedev.data
 
 import com.example.animedev.domain.model.Anime
+import com.example.animedev.domain.model.AnimeDetail
 import com.example.animedev.domain.model.AnimeSection
 import com.example.animedev.domain.model.DurationType
 import com.example.animedev.domain.model.EmissionStatus
+import com.example.animedev.domain.model.Episode
 import com.example.animedev.domain.model.Genre
 
 /**
@@ -99,6 +101,10 @@ object FakeDataSource {
         )
     )
 
+    private val episodesByAnime: Map<Long, List<Episode>> =
+        animeCatalog.associate { anime ->
+            anime.id to buildEpisodesFor(anime.title)
+        }
     val heroAnime: Anime = animeCatalog.first()
 
     val preferredGenres: List<Genre> = listOf(shonen, aventura, seinen)
@@ -110,6 +116,30 @@ object FakeDataSource {
                 animes = animeCatalog.filter { anime ->
                     anime.genres.any { it.id == genre.id }
                 }
+            )
+        }
+    fun getAnimeDetail(animeId: Long): AnimeDetail {
+        val anime = animeCatalog.firstOrNull { it.id == animeId }
+            ?: error("Anime con id $animeId no encontrado")
+
+        return AnimeDetail(
+            anime = anime,
+            culturalNotes = listOf(
+                "Influencias culturales presentes en ${anime.title}",
+                "Contexto histórico del año ${anime.releaseYear ?: "N/A"}",
+                "Referencias gastronómicas y festividades mostradas en la serie"
+            ),
+            episodes = episodesByAnime[animeId].orEmpty()
+        )
+    }
+
+    private fun buildEpisodesFor(title: String): List<Episode> =
+        List(8) { index ->
+            Episode(
+                number = index + 1,
+                title = "Episodio ${index + 1}",
+                durationMinutes = 24,
+                synopsis = "Resumen del episodio ${index + 1} de $title con apuntes culturales relevantes."
             )
         }
 }

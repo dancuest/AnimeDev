@@ -42,7 +42,8 @@ import com.example.animedev.ui.theme.AnimeDevTheme
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+    viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
+    onAnimeSelected: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -53,7 +54,8 @@ fun HomeScreen(
             onRetry = viewModel::loadHomeContent
         )
         is HomeUiState.Success -> HomeSuccessContent(
-            homeContent = state.homeContent
+            homeContent = state.homeContent,
+            onAnimeSelected = onAnimeSelected
         )
     }
 }
@@ -61,6 +63,7 @@ fun HomeScreen(
 @Composable
 private fun HomeSuccessContent(
     homeContent: HomeContent,
+    onAnimeSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sections = homeContent.sections.filter { it.animes.isNotEmpty() }
@@ -83,10 +86,16 @@ private fun HomeSuccessContent(
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            HeroRecommendation(anime = homeContent.heroAnime)
+            HeroRecommendation(
+                anime = homeContent.heroAnime,
+                onAnimeSelected = onAnimeSelected
+            )
         }
         items(sections, key = { it.genre.id }) { section ->
-            AnimeSectionRow(section = section)
+            AnimeSectionRow(
+                section = section,
+                onAnimeSelected = onAnimeSelected
+            )
         }
         item { Spacer(modifier = Modifier.height(12.dp)) }
     }
@@ -95,6 +104,7 @@ private fun HomeSuccessContent(
 @Composable
 private fun HeroRecommendation(
     anime: Anime,
+    onAnimeSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -103,7 +113,8 @@ private fun HeroRecommendation(
             .fillMaxWidth()
             .height(280.dp),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        onClick = { onAnimeSelected(anime.id) }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -152,6 +163,7 @@ private fun HeroRecommendation(
 @Composable
 private fun AnimeSectionRow(
     section: AnimeSection,
+    onAnimeSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(top = 24.dp)) {
@@ -166,7 +178,10 @@ private fun AnimeSectionRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(section.animes, key = { it.id }) { anime ->
-                AnimeCard(anime = anime)
+                AnimeCard(
+                    anime = anime,
+                    onAnimeSelected = onAnimeSelected
+                )
             }
         }
     }
@@ -175,13 +190,14 @@ private fun AnimeSectionRow(
 @Composable
 private fun AnimeCard(
     anime: Anime,
+    onAnimeSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .width(160.dp)
             .height(250.dp),
-        onClick = { /* Navegación pendiente */ }
+        onClick = { onAnimeSelected(anime.id) }
     ) {
         Column {
             AsyncImage(
@@ -247,7 +263,8 @@ private fun HomeSuccessPreview() {
                 homeContent = HomeContent(
                     heroAnime = FakeDataSource.heroAnime,
                     sections = FakeDataSource.buildSectionsForGenres(FakeDataSource.preferredGenres)
-                )
+                ),
+                onAnimeSelected = {}
             )
         }
     }
