@@ -2,36 +2,29 @@ package com.example.animedev.feature.home.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.animedev.data.repository.FakeAnimeRepositoryImpl
 import com.example.animedev.data.repository.FakeUserRepositoryImpl
 import com.example.animedev.domain.usecase.GetHomeContentUseCase
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val getHomeContentUseCase: GetHomeContentUseCase,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val getHomeContentUseCase: GetHomeContentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     init {
         loadHomeContent()
     }
 
     fun loadHomeContent() {
-        _uiState.value = HomeUiState.Loading
-        scope.launch {
+        viewModelScope.launch {
+            _uiState.value = HomeUiState.Loading
             val result = getHomeContentUseCase()
             result.fold(
                 onSuccess = { homeContent ->
@@ -44,11 +37,6 @@ class HomeViewModel(
                 }
             )
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        scope.cancel()
     }
 
     companion object {
