@@ -25,7 +25,11 @@ fun AppNavHost(
                 navController.navigate(Screen.AnimeDetail.createRoute(animeId))
             })
         }
-        composable(Screen.Favorites.route) { FavoritesScreen() }
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(onAnimeSelected = { animeId ->
+                navController.navigate(Screen.AnimeDetail.createRoute(animeId))
+            })
+        }
         composable(Screen.Trivia.route) { TriviaScreen() }
         composable(Screen.Settings.route) { SettingsScreen() }
         composable(Screen.Profile.route) { ProfileScreen() }

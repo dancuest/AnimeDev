@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Quiz
@@ -82,9 +83,11 @@ fun AnimeDetailScreen(
         )
         is AnimeDetailUiState.Success -> AnimeDetailContent(
             detail = state.detail,
+            isFavorite = state.isFavorite,
             onBack = onBack,
             onPlay = { onPlayRequested(state.detail.anime.id) },
-            onTrivia = { onTriviaRequested(state.detail.anime.id) }
+            onTrivia = { onTriviaRequested(state.detail.anime.id) },
+            onFavoriteToggle = viewModel::toggleFavorite
         )
     }
 }
@@ -93,9 +96,11 @@ fun AnimeDetailScreen(
 @Composable
 private fun AnimeDetailContent(
     detail: AnimeDetail,
+    isFavorite: Boolean,
     onBack: () -> Unit,
     onPlay: () -> Unit,
-    onTrivia: () -> Unit
+    onTrivia: () -> Unit,
+    onFavoriteToggle: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState()
@@ -114,9 +119,19 @@ private fun AnimeDetailContent(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { /* TODO: Integrar con favoritos reales */ },
-                icon = { Icon(Icons.Default.FavoriteBorder, contentDescription = null) },
-                text = { Text("Favoritos") }
+                onClick = onFavoriteToggle,
+                icon = {
+                    val icon = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder
+                    val contentDescription = if (isFavorite) {
+                        "Eliminar de favoritos"
+                    } else {
+                        "Agregar a favoritos"
+                    }
+                    Icon(icon, contentDescription = contentDescription)
+                },
+                text = {
+                    Text(if (isFavorite) "En favoritos" else "Agregar a favoritos")
+                }
             )
         }
     ) { innerPadding ->
@@ -360,9 +375,11 @@ private fun AnimeDetailPreview() {
         Surface {
             AnimeDetailContent(
                 detail = FakeDataSource.getAnimeDetail(FakeDataSource.heroAnime.id),
+                isFavorite = true,
                 onBack = {},
                 onPlay = {},
-                onTrivia = {}
+                onTrivia = {},
+                onFavoriteToggle = {}
             )
         }
     }
