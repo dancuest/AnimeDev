@@ -26,7 +26,115 @@ object FakeTriviaRepositoryImpl : TriviaRepository {
         val bestScore: Int = 0
     )
 
+    private data class CulturalFoodPreference(
+        val character: String,
+        val itemName: String,
+        val typeLabel: String,
+        val context: String
+    )
+
+    private data class CulturalTraditionMoment(
+        val context: String,
+        val correctConcept: String,
+        val distractors: List<String>,
+        val detail: String
+    )
+
     private val statsFlow = MutableStateFlow<Map<Long, TriviaStats>>(emptyMap())
+
+    private val foodTypeOptions = listOf("Comida de mar", "Dulces", "Comida salada", "Bebidas")
+
+    private val culturalFoodPreferences: Map<Long, CulturalFoodPreference> = mapOf(
+        1L to CulturalFoodPreference(
+            character = "Tanjiro",
+            itemName = "mitarashi dango",
+            typeLabel = "Dulces",
+            context = "lo comparte con Nezuko en las calles del mercado"
+        ),
+        2L to CulturalFoodPreference(
+            character = "Thorfinn",
+            itemName = "onigiri relleno",
+            typeLabel = "Comida salada",
+            context = "recuerda los bocadillos que probó junto a mercaderes japoneses"
+        ),
+        3L to CulturalFoodPreference(
+            character = "Riko",
+            itemName = "dorayaki",
+            typeLabel = "Dulces",
+            context = "lo prepara como merienda antes de descender al Abismo"
+        ),
+        4L to CulturalFoodPreference(
+            character = "el profesor Gojo",
+            itemName = "taiyaki",
+            typeLabel = "Dulces",
+            context = "no puede resistirse a comprarlos entre misiones"
+        ),
+        5L to CulturalFoodPreference(
+            character = "el Dr. Tenma",
+            itemName = "té matcha",
+            typeLabel = "Bebidas",
+            context = "lo utiliza para recordar sus raíces japonesas en medio de Europa"
+        ),
+        6L to CulturalFoodPreference(
+            character = "Winry",
+            itemName = "nikuman al vapor",
+            typeLabel = "Comida salada",
+            context = "los comparte con los hermanos Elric tras las reparaciones"
+        )
+    )
+
+    private val defaultFoodPreference = CulturalFoodPreference(
+        character = "el protagonista",
+        itemName = "dango",
+        typeLabel = "Dulces",
+        context = "como una forma de celebrar cada misión"
+    )
+
+    private val culturalTraditionMoments: Map<Long, CulturalTraditionMoment> = mapOf(
+        1L to CulturalTraditionMoment(
+            context = "cuando Tanjiro recuerda la Danza del Dios del Fuego",
+            correctConcept = "una danza kagura dedicada a los kami",
+            distractors = listOf("un matsuri de verano", "una ceremonia del té", "una ofrenda de hanami"),
+            detail = "El Kagura del Dios del Fuego es una danza ritual que honra a los espíritus"
+        ),
+        2L to CulturalTraditionMoment(
+            context = "cuando los guerreros comparten historias alrededor del fuego",
+            correctConcept = "un cuento yorishiro para invocar protección",
+            distractors = listOf("una práctica de sumo", "un desfile de Tanabata", "un entrenamiento de kendo"),
+            detail = "Los yorishiro simbolizan objetos que atraen a los kami para resguardar a los presentes"
+        ),
+        3L to CulturalTraditionMoment(
+            context = "en las festividades que los exploradores recrean antes de descender",
+            correctConcept = "un pequeño matsuri dedicado a desear buena fortuna",
+            distractors = listOf("una ceremonia nupcial", "una reunión hanami", "una subasta de mercado negro"),
+            detail = "Los matsuri se celebran para pedir protección y prosperidad a los dioses locales"
+        ),
+        4L to CulturalTraditionMoment(
+            context = "cuando los estudiantes visitan Kyoto para el torneo escolar",
+            correctConcept = "una ofrenda en un santuario sintoísta",
+            distractors = listOf("una iniciación ninja", "una procesión budista", "un festival de nieve"),
+            detail = "El arco de Kyoto muestra las plegarias en templos y ofrendas omikuji por la buena suerte"
+        ),
+        5L to CulturalTraditionMoment(
+            context = "cuando Tenma recuerda las reuniones familiares en Japón",
+            correctConcept = "una ceremonia del té para honrar a los invitados",
+            distractors = listOf("un ritual de kagura", "un festival Nebuta", "un acto de teatro kabuki"),
+            detail = "La ceremonia del té enfatiza la armonía, el respeto y la calma que Tenma añora"
+        ),
+        6L to CulturalTraditionMoment(
+            context = "cuando los hermanos Elric observan los talismanes de Ishval",
+            correctConcept = "un omamori utilizado como amuleto de protección",
+            distractors = listOf("un adorno de bonsái", "un pergamino emakimono", "un instrumento shamisen"),
+            detail = "Los omamori se consiguen en templos y se usan para desear seguridad en los viajes"
+        )
+    )
+
+    private val defaultTradition = CulturalTraditionMoment(
+        context = "cuando los héroes hacen una pausa para agradecer",
+        correctConcept = "un ritual sintoísta para pedir protección",
+        distractors = listOf("una clase de caligrafía", "una demostración de karate", "un concurso gastronómico"),
+        detail = "Muchos animes muestran escenas donde los personajes siguen costumbres sintoístas cotidianas"
+    )
 
     private val questionBank: Map<Long, Map<TriviaDifficulty, List<TriviaQuestion>>> =
         FakeDataSource.animeCatalog.associate { anime ->
@@ -78,13 +186,13 @@ object FakeTriviaRepositoryImpl : TriviaRepository {
             TriviaDifficulty.EASY to listOf(
                 buildDurationQuestion(anime),
                 buildStatusQuestion(anime),
-                buildGenreQuestion(anime)
+                buildCulturalFoodQuestion(anime)
             ),
             TriviaDifficulty.MEDIUM to listOf(
+                buildCulturalTraditionQuestion(anime),
                 buildReleaseYearQuestion(anime),
                 buildEpisodesQuestion(anime),
-                buildOriginalTitleQuestion(anime)
-            ),
+             ),
             TriviaDifficulty.HARD to listOf(
                 buildStatementQuestion(anime),
                 buildMissingGenreQuestion(anime),
@@ -120,20 +228,17 @@ object FakeTriviaRepositoryImpl : TriviaRepository {
         )
     }
 
-    private fun buildGenreQuestion(anime: Anime): TriviaQuestion {
-        val correctGenre = anime.genres.first()
-        val wrongGenres = FakeDataSource.genres.filter { it.id != correctGenre.id }
-            .map { it.name }
-        val options = (listOf(correctGenre.name) + wrongGenres.take(3)).shuffled()
-        val correctIndex = options.indexOf(correctGenre.name)
+    private fun buildCulturalFoodQuestion(anime: Anime): TriviaQuestion {
+        val preference = culturalFoodPreferences[anime.id] ?: defaultFoodPreference
+        val correctIndex = foodTypeOptions.indexOf(preference.typeLabel)
         return TriviaQuestion(
-            id = "${anime.id}_genre",
+            id = "${anime.id}_cultural_food",
             animeId = anime.id,
             difficulty = TriviaDifficulty.EASY,
-            question = "¿Qué género representa mejor a ${anime.title}?",
-            options = options,
+            question = "A ${preference.character} en ${anime.title} le encanta ${preference.itemName}; ¿qué tipo de comida japonesa es?",
+            options = foodTypeOptions,
             correctAnswerIndex = correctIndex,
-            feedback = "${anime.title} destaca por su componente ${correctGenre.name.lowercase()}"
+            feedback = "Se trata de ${preference.typeLabel.lowercase()} y refleja cómo ${preference.character} ${preference.context}"
         )
     }
 
@@ -177,22 +282,18 @@ object FakeTriviaRepositoryImpl : TriviaRepository {
         )
     }
 
-    private fun buildOriginalTitleQuestion(anime: Anime): TriviaQuestion {
-        val originalTitle = anime.originalTitle ?: anime.title
-        val otherTitles = FakeDataSource.animeCatalog
-            .filter { it.id != anime.id }
-            .mapNotNull { it.originalTitle }
-            .take(3)
-        val options = (listOf(originalTitle) + otherTitles).shuffled()
-        val correctIndex = options.indexOf(originalTitle)
+    private fun buildCulturalTraditionQuestion(anime: Anime): TriviaQuestion {
+        val highlight = culturalTraditionMoments[anime.id] ?: defaultTradition
+        val options = (listOf(highlight.correctConcept) + highlight.distractors).shuffled()
+        val correctIndex = options.indexOf(highlight.correctConcept)
         return TriviaQuestion(
-            id = "${anime.id}_title",
+            id = "${anime.id}_cultural_tradition",
             animeId = anime.id,
             difficulty = TriviaDifficulty.MEDIUM,
-            question = "¿Cuál es el título original de ${anime.title}?",
+            question = "En ${anime.title}, ${highlight.context}; ¿a qué tradición japonesa hace referencia?",
             options = options,
             correctAnswerIndex = correctIndex,
-            feedback = "En Japón se conoce como $originalTitle"
+            feedback = "${highlight.detail}."
         )
     }
 
