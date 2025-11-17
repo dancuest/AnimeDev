@@ -2,6 +2,7 @@ package com.example.animedev.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,6 +13,7 @@ import com.example.animedev.feature.animeinfo.ui.AnimeDetailScreen
 import com.example.animedev.feature.home.ui.HomeScreen
 import com.example.animedev.feature.profile.ui.ProfileScreen
 import com.example.animedev.feature.settings.ui.SettingsScreen
+import com.example.animedev.feature.trivia.ui.TriviaPlayScreen
 import com.example.animedev.feature.trivia.ui.TriviaScreen
 
 @Composable
@@ -30,7 +32,11 @@ fun AppNavHost(
                 navController.navigate(Screen.AnimeDetail.createRoute(animeId))
             })
         }
-        composable(Screen.Trivia.route) { TriviaScreen() }
+        composable(Screen.Trivia.route) {
+            TriviaScreen(onPlayTrivia = { animeId ->
+                navController.navigate(Screen.TriviaPlay.createRoute(animeId))
+            })
+        }
         composable(Screen.Settings.route) { SettingsScreen() }
         composable(Screen.Profile.route) { ProfileScreen() }
         composable(
@@ -40,7 +46,38 @@ fun AppNavHost(
             val animeId = backStackEntry.arguments?.getLong("animeId") ?: return@composable
             AnimeDetailScreen(
                 animeId = animeId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onTriviaRequested = { targetAnimeId ->
+                    navController.navigate(Screen.TriviaPlay.createRoute(targetAnimeId))
+                }
+            )
+        }
+        composable(
+            route = Screen.TriviaPlay.route,
+            arguments = listOf(navArgument("animeId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val animeId = backStackEntry.arguments?.getLong("animeId") ?: return@composable
+            TriviaPlayScreen(
+                animeId = animeId,
+                onBack = { navController.popBackStack() },
+                onGoToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onGoToTrivia = {
+                    navController.navigate(Screen.Trivia.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
     }
